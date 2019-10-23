@@ -1,0 +1,7 @@
+
+plumber
+
+
+/home/ubuntu/efs/IU_data_sc/item_universe_ie20191001/item_universe_ie_item_raw.sql
+
+-u vdm_app_user -p vdm_app_user@15Aug47 databasename  -h vdm-db01.c4521wshdz58.us-east-1.rds.amazonaws.com  vdm_app < /home/ubuntu/efs/IU_data_sc/item_universe_ie20191001/item_universe_ie_item_raw.sql

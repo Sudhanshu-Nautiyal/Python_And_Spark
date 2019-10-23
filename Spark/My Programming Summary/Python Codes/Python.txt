@@ -1,0 +1,180 @@
+
+#import re
+
+
+#  for letter in 'Python':     # First Example
+#    print ('Current Letter :', letter)
+#
+# fruits = ['banana', 'apple',  'mango']
+# for fruit in fruits:        # Second Example
+#    print ('Current fruit :', fruit)
+#
+# print ("Good bye!")
+
+
+###### Even Odd Example
+
+# number = input("Type the Number Please: ")
+# i = 2
+#
+# if int(number)%2 == 0:
+#  print("This is an Even Number")
+# else:
+#  print("This is an Odd Number")
+
+ ########## Filtering List
+
+# a = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89]
+# print("Original Number in the list: ", a)
+# filter_by = int(input("Type the number greater than you want to see in the list: "))
+# filtered_list = list(filter(lambda x : x>filter_by, a))
+# print("Filtered Number of the list greater then : ", filtered_list)
+
+
+##########DIVISORS
+# lists = []
+# num = int(input("Type the number for Divisor: "))
+# x = list(range(2, num+1))
+# for element in x:
+#     if num%element == 0 :
+#         lists.append(element)
+# print(lists)
+
+
+########### LIST INTERSECTION##############
+
+# a = list(range(1,10))
+# b = list(range(5,10))
+
+# c = set(a) & set(b)
+# print(c)
+#
+# commonList = set();
+## [commonList.add(x) for x in a for y in b if x == y]
+# print(list(commonList))
+
+# new_list = []
+#
+# for num in a:
+#  if num in b:
+#   new_list.append(num)
+#
+# print(new_list)
+
+
+############## PALINDROME  ##################
+
+# word = input("Please type the word: =")
+#
+# if word[::] == word[::-1]:
+#     print("String is palindrome")
+# else:
+#     print("String is not palindrome")
+#
+
+
+################### LIST COMPREHENSIONS
+#
+# a = [1, 4, 9, 16, 25, 36, 49, 64, 81, 100]
+# list = []
+# b = [number for number in a if number % 2 == 0]
+# print(b)
+# #
+# for i in a:
+#  if i%2 == 0:
+#     list.append(i)
+# print(list)
+
+# allproducts = []
+# x = [1, 2, 3]
+# y = [5, 10, 15]
+#
+# c = x+y
+#
+# allproducts = [a for a in c if a % 2 ==0]
+#
+# print(allproducts)
+
+
+############### PRIME NUMBERS
+
+# num = int(input('Insert a number: '))
+# a = [x for x in range(2, num) if num % x == 0]
+#
+#
+# def is_prime(n):
+#     if num > 1:
+#         if len(a) == 0:
+#             print ('prime')
+#         else:
+#             print ('NOT prime')
+#     else:
+#         print('NOT prime')
+#
+#
+# is_prime(num)
+
+########### FIBONACII SERIES
+#
+# a = int(input("Please provide the number: "))
+# lists = [0,1]
+# for i in range(1, a+1):
+#     lists.append(lists[i]+lists[i-1])
+# print(lists[1:a+1])
+
+
+
+############ Reverse Word Order
+
+# a = input("Please provide the string: ")
+#
+# result = re.sub(' +', ' ',a).split(" ")[::-1]
+#
+# j = len(result)-1
+#
+# list = []
+#
+# while (j >= 0):
+#   list.append(result[j])
+#   j=j-1
+
+# str = " "
+# print(str.join(result))
+
+
+############ Password Generator
+#
+# import string
+# import random
+#
+# 1
+# def pw_gen(size = 8, chars=string.ascii_letters + string.digits + string.punctuation):
+# 	return ''.join(random.choice(chars) for _ in range(size))
+#
+# print(pw_gen(int(input('How many characters in your password?'))))
+#
+# # generate a password with length "passlen" with no duplicate characters in the password
+# 2
+# import random
+#
+# s = "abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()?"
+# passlen = 8
+# p =  "".join(random.sample(s,passlen ))
+# print p# generate a password with length "passlen" with no duplicate characters in the password
+
+
+
+import requests
+from bs4 import BeautifulSoup
+
+base_url = 'http://www.nytimes.com'
+r = requests.get(base_url)
+soup = BeautifulSoup(r.text)
+
+for story_heading in soup.find_all(class_="story-heading"):
+    if story_heading.a:
+        print(story_heading.a.text.replace("\n", " ").strip())
+    else:
+print(story_heading.contents[0].strip())
+
+

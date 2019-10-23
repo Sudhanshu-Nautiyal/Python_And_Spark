@@ -1,0 +1,20 @@
+
+import shutil
+import os
+from os import path
+
+source = 'D:\Spark_Data\VDM_FILE\Source'
+dest = 'D:\Spark_Data\VDM_FILE\Destination'
+
+prefix = 'cluster_'
+
+files = os.listdir(source)
+
+for f in files:
+    if  (f.startswith("part") or f.endswith(".csv")):
+        shutil.move(source+'/'+f, dest)
+        print('My file moved')
+
+    if path.exists(dest+'/'+f) and (f.startswith("part") or f.endswith(".csv")):
+        os.rename(dest+'/'+f, dest+'/'+ prefix+'VDM'+'.csv')
+        print('My file Renamed')

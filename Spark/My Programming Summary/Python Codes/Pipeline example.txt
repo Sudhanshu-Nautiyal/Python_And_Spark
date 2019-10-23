@@ -1,0 +1,77 @@
+
+from pyspark.sql.functions import col,udf
+from pyspark.sql.types import StructType, StructField, IntegerType,StringType
+from pyspark.sql import SQLContext
+from pyspark.ml.feature import Tokenizer, RegexTokenizer
+from pyspark.sql.types import IntegerType
+from pyspark.ml.feature import CountVectorizer
+from pyspark.ml.feature import MinHashLSH
+from pyspark.ml.linalg import Vectors
+from pyspark.sql.types import LongType, StructField, StructType
+from pyspark.sql import SparkSession
+import fnmatch, os, shutil
+import os, fnmatch
+from pathlib import Path
+import uuid
+import datetime
+import time
+from pyspark.ml import Pipeline
+from pyspark import keyword_only
+from pyspark.ml.pipeline import Transformer
+from pyspark.ml.param.shared import HasInputCol, HasOutputCol
+?
+# spark and sql context
+start_time = time.time()
+print("Start Time:"+str(datetime.datetime.now()))
+?
+#Creting context for Spark & SQL
+spark = SparkSession.builder.appName('Xeeva').getOrCreate()
+sqlContext = SQLContext(spark)
+?
+# Variables
+inputFolderName='./Input/'
+inputFileName='18jul.csv'
+resultFolderName='./output/'
+outputFileSuffix='_result.csv'
+?
+#Load from csv file
+print("File reading process started:"+str(datetime.datetime.now()))
+InputDataFrame = sqlContext.read.csv(inputFolderName + inputFileName, header=True)
+?
+# Filter particular columns
+InputDataFrame=InputDataFrame.select('sno', 'PRODUCT_DESC')
+?
+#create temp sql view for sorting
+InputDataFrame.createOrReplaceTempView("inputDF")
+InputDataFrame = spark.sql("SELECT  'doc-' || sno,PRODUCT_DESC FROM inputDF  order by sno")
+print("File reading process ended:"+str(datetime.datetime.now()))
+print('Total Record Count=>' + str(InputDataFrame.count()))
+?
+print("Tokenizer process started:"+str(datetime.datetime.now()))
+tokenizer = Tokenizer(inputCol="PRODUCT_DESC", outputCol="words")
+?
+print("Count vectorizer process started:"+str(datetime.datetime.now()))
+countVectorizer = CountVectorizer(inputCol=tokenizer.getOutputCol(), outputCol="features", vocabSize=99999999, minDF=1.0)
+?
+print("MinHashLSH process started:"+str(datetime.datetime.now()))
+mhLSH = MinHashLSH(inputCol= "features", outputCol="hashes", numHashTables=5)
+?
+# Build the pipeline
+pipeline = Pipeline(stages=[tokenizer, countVectorizer])
+?
+# Fit the pipeline
+pipeLineModel = pipeline.fit(InputDataFrame)
+?
+vectorizeDataFrame=pipeLineModel.transform(InputDataFrame)
+?
+vectorizeDataFrame.show()
+?
+minHashLSH = mhLSH.fit(vectorizeDataFrame)
+?
+approxSimiliarityJoin= minHashLSH.approxSimilarityJoin(vectorizeDataFrame, vectorizeDataFrame, 0.8, "Score")
+?
+print("approxSimiliarityJoin process completed:"+str(datetime.datetime.now()))
+approxSimiliarityJoin.show(truncate=False)
+?
+?
+?

@@ -1,0 +1,21 @@
+class Employee:
+  def __init__(self, name):
+     self.name = name
+
+  def emp_wages(self, hours):
+      self.hours = hours
+      return self.hours*20
+
+class part_time_employee(Employee):
+   def cal_wages(self, hours):
+     self.hours = hours
+     return self.hours*12
+
+   def full_time_wages(self, hours):
+     self.hours = hours
+     return super(part_time_employee,self).emp_wages(hours)
+
+
+a = part_time_employee("Mohit")
+print(a.full_time_wages(10))
+

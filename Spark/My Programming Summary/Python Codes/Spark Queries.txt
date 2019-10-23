@@ -1,0 +1,680 @@
+
+*********** Step ****************
+
+1.download spark
+2.add path in system enviroment variable "for example d:/spark/bin"
+3.create floder in c:/hadoop/bin
+4.copy winutils from winutils-master in c:/hadoop/bin
+5.create floder in c:/tmp/hive
+6.create enviroment system variable hadoop_home with path c:/hadoop
+7.add path in %hadoop_home% in PATH 
+8.Add path of Spart in the PATH variable of 
+8.Restart the system.
+
+https://runawayhorse001.github.io/LearningApacheSpark/setup.html#configure-spark-on-windows
+
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as func
+
+spark = SparkSession.builder.appName("Analysing Product data").getOrCreate()
+
+data = spark.read.format("csv").option("header", "true").load("D:\Data\product.csv")
+
+#data.show(10)
+#customer_sum_value = data.groupby('location_id').agg({"price": "sum"}).withColumnRenamed("sum(price)", "Item_Price")
+#customer_sum_value.show()
+n
+
+#Total_amount =  customer_sum_value.agg({"AmountSum" : "sum"})
+#Total_amount.show()
+
+
+#Location_wise_count =  data.groupBy("Location_id", "SUPPLIER_ID").count()
+
+# Location_wise_sum =  data.groupBy("Location_Name")\
+#                     .agg({"price":"sum"})\
+#                     .withColumnRenamed("sum(price)", "Location_wise_Prod_Price")
+#
+# Location_wise_sum = Location_wise_sum.withColumn("Location_wise_price", func.round(Location_wise_sum["Location_wise_Prod_Price"], 2))
+#
+# print("Location Wise price Summary")
+# Location_wise_sum.select("Location_Name", "Location_wise_price" )\
+#                  .orderBy(Location_wise_sum[1].desc()).show()
+
+
+# Category_Wise_Contract_Price =  data.groupBy("CATEGORIES_NAME") \
+#     .agg({"price":"sum"}) \
+#     .withColumnRenamed("sum(price)", "Category_Wise_Prod_Price")
+#
+# Category_Wise_Contract_Price = Category_Wise_Contract_Price.\
+#                                withColumn("Category_Wise_price", func.round(Category_Wise_Contract_Price["Category_Wise_Prod_Price"], 2))
+#
+# print("Category Wise price Summary")
+# Category_Wise_Contract_Price.select("Categories_Name", "Category_Wise_Price")\
+#                             .orderBy(Category_Wise_Contract_Price[1].desc())\
+#                             .show()
+
+
+# Supplier_Wise_Contract_Price =  data.groupBy("Supplier_Name")\
+#                                .agg({"price":"sum"})\
+#                                .withColumnRenamed("sum(price)", "Supplier_Contract_Price")
+#
+# Supplier_Wise_Contract_Price = Supplier_Wise_Contract_Price.withColumn("Contract_price", func.round(Supplier_Wise_Contract_Price["Supplier_Contract_Price"], 2))
+#
+# print("Supplier Wise price Summary")
+# Supplier_Wise_Contract_Price.select("Supplier_Name", "Contract_price")\
+#     .orderBy(Supplier_Wise_Contract_Price[1].desc()).show()
+#
+
+#data.show(10)
+
+
+### Query as a SQL Command ####
+#data.createOrReplaceTempView("product")
+
+#spark.sql("select SUPPLIER_NAME, round(SUM(PRICE),2) AS SUPPLIER_PRICE from product GROUP BY SUPPLIER_NAME order by SUPPLIER_PRICE desc").show(3)
+
+data.select("Supplier_name", "Location_Name", "PRICE").filter(data['PRICE'] <10).orderBy('Price').show(30)
+
+#TotalValueofallProducts = Location_wise_sum.agg({"Location_wise_Prod_Price": "sum"}).show()
+
+#TotalValueofallProducts.show()
+
+#Location_specific = data.filter(data['location_id'] == 198).show(5)
+
+#data.createOrReplaceTempView.data
+
+#spark.sql("select * from product").show(5)
+
+#data.select("Product_id", "Location_id").show(5)
+
+
+#data.groupBy(data['price']).count().orderBy('price').show(10)
+
+
+#data.select("Supplier_name", "Price").show(20)
+
+
+
+
+********************* Joins*********************
+
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as func
+
+spark = SparkSession.builder.appName("Analysing Product data").getOrCreate()
+
+DF_EMP_A = spark.read.format("csv")\
+     .option("header", "true").load("D:\Data\employee_a.csv")
+
+DF_EMP_B = spark.read.format("csv")\
+            .option("header", "true").load("D:\Data\employee_b.csv")
+
+df1 = DF_EMP_A.alias('df1')
+df2 = DF_EMP_B.alias('df2')
+
+# print("************Inner Join Output ************")
+# df_inner_join = df1.join(df2, df1.A_Employee_ID == df2.B_Employee_ID)\
+#              .select(df1.A_Employee_ID, df1.A_Employee_Name, df2.B_Employee_ID, df2.B_Employee_Name)
+#
+# df_inner_join.show()
+
+# print("************Left Join Output ************")
+#
+# df_left_join = df1.join(df2, df1.A_Employee_ID == df2.B_Employee_ID,how='left')\
+#               .select(df1.A_Employee_ID, df1.A_Employee_Name, df2.B_Employee_ID, df2.B_Employee_Name)
+# df_left_join.show()
+
+
+# print("************Right Join Output ************")
+#
+# df_right_join = df1.join(df2, df1.A_Employee_ID == df2.B_Employee_ID,how='right')\
+#               .select(df1.A_Employee_ID, df1.A_Employee_Name, df2.B_Employee_ID, df2.B_Employee_Name)
+# df_right_join.show()
+#
+print("************Full Outer Join Output ************")
+
+df_full_join = df1.join(df2, df1.A_Employee_ID == df2.B_Employee_ID,how='full')\
+              .select(df1.A_Employee_ID, df1.A_Employee_Name, df2.B_Employee_ID, df2.B_Employee_Name)\
+              .orderBy(df1.A_Employee_ID)
+df_full_join.show()
+
+
+************* Write CSV File Different Methods *********************
+
+#df_inner_join.write.csv("D:\Data\mycsv.csv")
+#df_inner_join.coalesce(1).write.option("header", "true").csv("D:\Data\mycsv.csv")
+#df_inner_join.toPandas().to_csv("D:\Data\mycsv.csv")
+
+
+
+
+************* distinct records *************
+
+df.select("columnname").distinct().show()
+
+****** SQL Query Use in Spark **************
+
+
+df_final_spend.registerTempTable("finalspend")
+df_data = spark.sql("SELECT location_id FROM finalspend")
+df_data.show(10)
+
+
+
+*********************   Map   ***********************
+
+Map takes a function f and an array as input parameters and outputs an array where f is applied to every element. In this respect, using map is equivalent to for loops.
+
+For instance, to convert a list of temperatures in Celsius to a list of temperature in Kelvin:
+
+ temp_c = [10, 3, -5, 25, 1, 9, 29, -10, 5]
+ temp_K = list(map(lambda x: x + 273.15, temp_c))
+ list(temp_K)
+
+
+
+
+*************** Filter ***********
+
+As the name suggests, filter can be used to filter your data. It tests each element of your input data and returns a subset of it for which a condition given by a function is TRUE. It does not modify your input data.
+
+numbers = range(-15, 15)
+less_than_zero = list(filter(lambda x: x < 0, numbers))
+print(less_than_zero)
+
+[-15, -14, -13, -12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1] 
+
+
+****** Difference between flatMap() and map() on an RDD ***********
+
+map(func) Return a new distributed dataset formed by passing each element of the source through a function func.
+
+flatMap(func) Similar to map, but each input item can be mapped to 0 or more output items (so func should return a Seq rather than a single item).
+
+
+
+#spark.sql("select SUPPLIER_NAME, round(SUM(PRICE),2) AS SUPPLIER_PRICE from product GROUP BY SUPPLIER_NAME order by SUPPLIER_PRICE desc").show(3)
+#data.select("Supplier_name", "Location_Name", "PRICE").filter(data['PRICE'] <10).orderBy('Price').show(30)
+#TotalValueofallProducts = Location_wise_sum.agg({"Location_wise_Prod_Price": "sum"}).show()
+#TotalValueofallProducts.show()
+#Location_specific = data.filter(data['location_id'] == 198).show(5)
+#data.createOrReplaceTempView.data
+#spark.sql("select * from product").show(5)
+#data.select("Product_id", "Location_id").show(5)
+#data.groupBy(data['price']).count().orderBy('price').show(10)
+#data.select("Supplier_name", "Price").show(20)
+
+# def add(x, y):
+#     return x + y
+# # Call the function
+# print("********Code to Execute a Normal Function*****************")
+# print(add(2, 3))
+
+
+# add = lambda x, y: x + y
+
+# print("*********Example of Lambda Function**************")
+# print (add(2, 3));
+
+
+# def multiply2(x):
+#     return x * 2
+
+# print("********Code to Execute a MAP Function*************")
+
+The “map” transformation apply lambda functions to all elements of the RDD and return new RDD.
+
+
+# print(list(map(multiply2, [1,2,3,4])))
+
+# Output [2, 4, 6, 8]
+# print(list(map(lambda x : x*2, [1, 2, 3, 4])))
+
+
+# numbers = range(-15, 15)
+# less_than_zero = list(filter(lambda x: x < 0, numbers))
+# print(less_than_zero)
+#
+# numbers = [1, 4, 6, 2, 9, 10]
+# # Define a new function combine
+# # Convert x and y to strings and create a tuple from x,y
+# def combine(x,y):
+#   return "(" + str(x) + ", " + str(y) + ")"
+#
+# # Use reduce to apply combine to numbers
+# from functools import reduce
+#
+# print(numbers)
+# print(reduce(combine,numbers))
+
+
+
+***************   6 GB file Spend Data Queries ****************
+
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as func
+import sys, math
+
+spark = SparkSession.builder.appName("Analysing Product data").getOrCreate()
+bad_chars = ['#', ':', '?']
+df_Spend_data = spark.read.format("csv")\
+                .option("header", "true")\
+    .load("D:\Spark_Data\MV_PO_Dump.csv")
+
+#df_Spend_data_group.registerTempTable("FINAL_SPEND")
+
+#df_Spend_data.show(10)
+
+# print("Sourcing Spend Wise price Summary")
+# df_final_spend = df_Spend_data\
+#     .select("LOCATION_ID", "TYPE", "CATEGORY", "SUB_CATEGORY", "SPEND_AMOUNT_USD")\
+# .orderBy(df_Spend_data[0].desc())
+
+#df_final_spend = spark.sql("SELECT LOCATION_ID, TYPE, CATEGORY, SUB_CATEGORY, TOTAL_SPEND FROM FINAL_SPEND WHERE LOCATION_ID IS NOT NULL" )
+# df_final_spend.filter(df_final_spend.LOCATION_ID.isNotNull())\
+#        .show(df_final_spend.count(), False)
+
+print("Sourcing Spend Wise price Summary")
+df_final_spend =  df_Spend_data.groupBy("LOCATION_ID", "TYPE", "CATEGORY", "SUB_CATEGORY")\
+                              .agg({"spend_amount_usd":"sum"})\
+                              .withColumnRenamed("sum(spend_amount_usd)", "TOTAL_SPEND")
+
+df_final_spend.coalesce(1).write.format('csv').save("D:\Spark_Data\Sourcing_Spend.csv", header='true')
+
+df_location_master = df_final_spend.select("location_id").distinct()
+
+df_location_master.coalesce(1).write.format('csv').save("D:\Spark_Data\Location_Master.csv", header='true')
+
+df_category_master = df_final_spend.select("TYPE", "CATEGORY", "SUB_CATEGORY").distinct()
+
+df_category_master.coalesce(1).write.format('csv').save("D:\Spark_Data\Category_master.csv", header='true')
+
+# df_final_spend.registerTempTable("finalspend")
+# df_data = spark.sql("SELECT location_id FROM finalspend")
+# df_data.show(10)
+
+
+
+****************   COUNT AND GROUP BY EXAMPLE *********************
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+import sys, math
+from pyspark.sql.functions import udf
+from pyspark.sql.types import StringType
+import pandas as pd
+
+
+spark = SparkSession.builder.appName("Analysing MRE Spend data").getOrCreate()
+
+df_MRE_DATA = spark.read.format("csv")\
+              .option("header", "true")\
+              .option("escape", "\"")\
+              .option("ignoreLeadingWhiteSpace","false")\
+              .option("ignoreTrailingWhiteSpace","false")\
+              .load("D:\Spark_Data\MRE_ANALYSIS.csv")
+
+df_MRE_DATA.registerTempTable("MRE_FINAL_OUTPUT")
+
+
+# DF2_MRE_LIST = df_MRE_DATA.groupby("ExactDup_ClusterID").agg(F.collect_set("LOCATION_NAME") , F.collect_set("SUPPLIERNAME"), F.collect_set("LOCATION_NAME"), F.collect_set("BUYER_NAME"))
+#
+# df_inner_join = DF1_MRE_OUTPUT.join(DF2_MRE_LIST, DF1_MRE_OUTPUT.ExactDup_ClusterID == DF2_MRE_LIST.ExactDup_ClusterID)\
+#              .select(DF1_MRE_OUTPUT.ExactDup_ClusterID, DF1_MRE_OUTPUT.SKU_COUNT, DF1_MRE_OUTPUT.LOC_COUNT,  DF1_MRE_OUTPUT.BUYER_COUNT, DF1_MRE_OUTPUT.SUPPLIER_COUNT)
+
+
+# print("Sourcing Spend Wise price Summary")
+# df_final_spend =  df_Spend_data.groupBy("LOCATION_ID", "TYPE", "CATEGORY", "SUB_CATEGORY")\
+#                               .agg({"spend_amount_usd":"sum"})\
+#                               .withColumnRenamed("sum(spend_amount_usd)", "TOTAL_SPEND")
+
+
+DF_MRE_OUTPUT.coalesce(1).write.format('csv').save("D:\Spark_Data\MRE_OUTPUT_FILE.csv", header='true')
+
+
+
+
+****************   collect_set AND GROUP BY EXAMPLE *********************
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+import sys, math
+from pyspark.sql.functions import concat_ws
+from pyspark.sql.types import StringType
+import pandas as pd
+
+spark = SparkSession.builder.appName("Analysing MRE Spend data").getOrCreate()
+
+df_MRE_DATA = spark.read.format("csv")\
+              .option("header", "true")\
+              .load("D:\Spark_Data\MRE_Analysis.csv")
+
+#df_MRE_DATA.orderBy('ExactDup_ClusterID').show(100)
+#
+df_MRE_DATA.registerTempTable("MRE_FINAL_OUTPUT")
+#
+#
+# print("Sourcing Spend Wise price Summary")
+# df_final_spend = df_Spend_data\
+#     .select("LOCATION_ID", "TYPE", "CATEGORY", "SUB_CATEGORY", "SPEND_AMOUNT_USD")\
+# .orderBy(df_Spend_data[0].desc())
+#
+#
+DF_MRE_OUTPUT = spark.sql("SELECT ExactDup_ClusterID,  collect_set(PRODUCT_SKU) PRODUCT_SKU, collect_set(LOCATION_NAME) AS LOCATION_NAME,\
+                          collect_set(BUYER_NAME) AS BUYER_NAME, collect_set(SUPPLIERNAME) AS SUPPLIERNAME, COUNT(DISTINCT PRODUCT_SKU) SKU_COUNT,\
+                          COUNT(DISTINCT LOCATION_NAME) AS LOC_COUNT, COUNT(DISTINCT BUYER_NAME) BUYER_COUNT, COUNT(DISTINCT SUPPLIERNAME) SUPPLIER_COUNT\
+                          FROM MRE_FINAL_OUTPUT\
+                          GROUP BY ExactDup_ClusterID")
+
+DF_STRING_OUTPUT = DF_MRE_OUTPUT.withColumn('LOCATION_NAME', concat_ws(", ",  'LOCATION_NAME'))\
+                                .withColumn('PRODUCT_SKU', concat_ws(", ",  'PRODUCT_SKU'))\
+                                .withColumn('BUYER_NAME', concat_ws(", ",  'BUYER_NAME'))\
+                                .withColumn('SUPPLIERNAME', concat_ws(", ",  'SUPPLIERNAME')).orderBy('ExactDup_ClusterID')
+
+
+
+
+DF_STRING_OUTPUT.coalesce(1).write.format('csv').save("D:\Spark_Data\MRE_OUTPUT_FILE.csv", header='true')
+
+
+     
+
+**************** Code for Excel Import **********************
+
+Load JAVA libraries JAR files in the python path
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+import sys, math
+from pyspark.sql.functions import concat_ws
+from pyspark.sql.types import StringType
+import pandas as pd
+
+
+spark = SparkSession.builder.appName("Analysing MRE Spend data").getOrCreate()
+
+v_filepath='D:\Spark_Data\AAM_PROD_1.xlsx'
+#Creting context for Spark & SQL
+
+#sqlContext = SQLContext(spark)
+df =spark.read.format ("com.crealytics.spark.excel") \
+   .option("useHeader", "true") \
+   .option("treatEmptyValuesAsNulls", "true") \
+   .option("inferSchema", "true") \
+   .option("addColorColumns", "False") \
+   .option("maxRowsInMey", 2000) \
+   .option("sheetName", "Data") \
+   .option("location", v_filepath)\
+   .load()\
+   .show(10)
+
+
+
+#mre_data_file = pd.read_excel('D:\Spark_Data\MRE_ANALYSIS.xlsx')
+
+#mre_data_file.Data.show(10)
+
+
+
+
+
+
+********************  Read dataset from DataBase  ***********************
+
+## set up  SparkSession
+from pyspark.sql import SparkSession
+
+spark = SparkSession \
+            .builder \
+            .appName("Python Spark create RDD example") \
+            .config("spark.some.config.option", "some-value") \
+            .getOrCreate()
+
+## User information
+user = 'your_username'
+pw   = 'your_password'
+
+## Database information
+table_name = 'table_name'
+url = 'jdbc:postgresql://##.###.###.##:5432/dataset?user='+user+'&password='+pw
+properties ={'driver': 'org.postgresql.Driver', 'password': pw,'user': user}
+
+df = spark.read.jdbc(url=url, table=table_name, properties=properties)
+
+df.show(5)
+df.printSchema()
+
+
+
+
+
+*********** CSV FILE SPECIAL CHARACTER IMPORT *********************
+
+from pyspark import SparkConf, SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+from functools import reduce
+from pyspark.sql import DataFrame
+import pyspark.sql.functions as F
+import sys, math
+from pyspark.sql.functions import concat_ws
+from pyspark.sql.types import StringType
+import pandas as pd
+
+spark = SparkSession.builder.appName("Analysing MRE Spend data").getOrCreate()
+
+df_MRE_DATA = spark.read.format("csv")\
+              .option("header", "true")\
+              .option("escape", "\"")\
+              .option("charToEscapeQuoteEscaping", "\n")\
+              .option("ignoreLeadingWhiteSpace","false")\
+              .option("ignoreTrailingWhiteSpace","false")\
+              .option("multiLine", "true")\
+              .load("D:\Spark_Data\MRE_ANALYSIS.csv")
+
+df_MRE_DATA = df_MRE_DATA.withColumnRenamed("ExactDup-ClusterID", "ExactDup_ClusterID")
+
+df_MRE_DATA.registerTempTable("MRE_FINAL_OUTPUT")
+
+DF_MRE_OUTPUT = spark.sql("SELECT cast (ExactDup_ClusterID as Int) ExactDup_ClusterID,  collect_set(PRODUCT_SKU) PRODUCT_SKU, collect_set(LOCATION_NAME) AS LOCATION_NAME,\
+                          collect_set(BUYER_NAME) AS BUYER_NAME, collect_set(SUPPLIERNAME) AS SUPPLIERNAME, COUNT(DISTINCT PRODUCT_SKU) SKU_COUNT,\
+                          COUNT(DISTINCT LOCATION_NAME) AS LOC_COUNT, COUNT(DISTINCT BUYER_NAME) BUYER_COUNT, COUNT(DISTINCT SUPPLIERNAME) SUPPLIER_COUNT\
+                          FROM MRE_FINAL_OUTPUT\
+                          GROUP BY ExactDup_ClusterID\
+                          ORDER BY ExactDup_ClusterID"
+                          )
+
+DF_STRING_OUTPUT = DF_MRE_OUTPUT.withColumn('LOCATION_NAME', concat_ws(", ",  'LOCATION_NAME'))\
+                                .withColumn('PRODUCT_SKU', concat_ws(", ",  'PRODUCT_SKU'))\
+                                .withColumn('BUYER_NAME', concat_ws(", ",  'BUYER_NAME'))\
+                                .withColumn('SUPPLIERNAME', concat_ws(", ",  'SUPPLIERNAME'))
+
+#DF_STRING_OUTPUT.show(100)
+
+DF_STRING_OUTPUT.coalesce(1).write.format('csv').save("D:\Spark_Data\MRE_OUTPUT_FILE.csv", header='true')
+
+
+
+
+
+************************ Rank partition by examples *********************
+
+from pyspark import SparkContext
+from pyspark.sql import SQLContext
+from pyspark.sql import SparkSession
+#from functools import reduce
+from pyspark.sql import DataFrame
+#from pyspark.sql.functions import udf
+#import pyspark.sql.functions as func
+#import pyspark.sql.functions
+import sys, math
+
+#from pyspark.sql.types import IntegerType
+
+spark = SparkSession.builder\
+                    .appName("Visteon Spend Analysis")\
+                    .getOrCreate()
+
+# Read PO data from a CSV
+df_spendData = spark.read\
+           .format("csv")\
+           .option("header", "true") \
+           .option("multiLine", "true") \
+           .option("quoteMode", "ALL") \
+           .option("mode","PERMISSIVE")\
+           .option("escape", "\"")\
+           .load("D:\AAM Analysis\Archive Loads\mv_po_dump_20190705_ist_aam_Prod_Load.csv")
+
+df_spendData.show(10)
+cnt_poRow = df_spendData.count()
+print (cnt_poRow)
+
+
+#df_supplierCat = spark.sql("select  count(distinct supplier_name)  from tblSpend")
+#df_supplierCat.show()
+df_spendData.registerTempTable("tblSpend")
+df_supplierCat = spark.sql("SELECT "
+                         "supplier_name Supplier_Name,  "
+                         "nvl(TYPE,'NONE')|| '>'||nvl(category,'NONE')  Category, "
+                         "sum(spend_amount_usd) Supp_Category_Spends , "
+                         "Count(*) Count_of_lines,  "
+                         "Count(distinct Itemdesc) Count_of_distinct_Items  "
+                         "FROM tblSpend "
+                         "GROUP BY supplier_name, nvl(TYPE,'NONE')|| '>'||nvl(category,'NONE') "
+                         "ORDER BY 1,2 "
+                      )
+#df_supplierCat.show(20)
+df_supplierCat.registerTempTable("tblSupplierCat")
+#data  frame with Conflicted suppliers ( with Category Counts)
+df_supplierCat  = spark.sql("SELECT " 
+                          "Supplier_name, Category,Supp_Category_Spends Supplier_spends, "
+                          "Supp_Category_Spends/sum(Supp_Category_Spends) over(partition by Supplier_name)*100 Spend_percenatge,  "
+                          "Count_of_lines, Count_of_distinct_Items Count_of_Items, "
+                          "count(Category) over(partition by Supplier_name)  Supp_cat_cnt  "
+                          "FROM "
+                          "tblSupplierCat "
+                          )
+df_supplierCat.show()
+df_supplierCat.registerTempTable("tblSupplierCat")
+df_supplierCatSummary = spark.sql("SELECT Supplier_summary, count(distinct supplier_name) Supplier_count "
+                                  "FROM "
+                                      "(SELECT Supplier_name, "
+                                      "case when Supp_cat_cnt  = 1 then 'Cleaned Supplier' "
+                                      "else 'Supplier with Category Conflicts' end "
+                                      "Supplier_summary "
+                                      "FROM "
+                                      "tblSupplierCat "
+                                       ") "
+                                  " GROUP BY  Supplier_summary"
+                                  )
+
+df_supplierCatSummary.show()
+
+df_supplierCatSummary.coalesce(1).write.format('csv').save("D:\Spend Analysis Use case\SupplierCatSummary.csv", header='true')
+
+df_supplierCatConflicts  = spark.sql("SELECT  " 
+                          "Supplier_name, Category, Supplier_spends, "
+                          "Spend_percenatge,  "
+                          "Count_of_lines, Count_of_Items, "
+                          "RANK() OVER(partition by Supplier_name order by Supplier_spends  desc) Rank "
+                          "FROM "
+                          "tblSupplierCat "
+                          "WHERE Supp_cat_cnt > 1 "
+                          "order by 1, Supplier_spends desc, 2  ")
+df_supplierCatConflicts.show(100)
+
+df_supplierCatConflicts.coalesce(1).write.format('csv').save("D:\Spend Analysis Use case\Suplier_category_conflicts.csv", header='true')
+
+
+
+********* To display the full column values of dataframe *************
+
+show(truncate = False)
+
+
+
+
+*********** Query to get the Word Count / Number of words from a Dataframe Column ***********************
+
+output = output.withColumn('WordCount', f.size(f.split(f.col('DocName'), ' ')))
+
+
+
+
+************** Logic with Dictionary to replace the "short form words / abbreviation words" from a full form words (keyword)***********
+
+ replace_full_forms = dict(full_Forms.rdd.map(lambda x: (x['Keyword'], x['Full_Keyword'])).collect())
+#
+#         for k, v in replace_full_forms.items():
+#             #output_dq.at[k, 'cleanDocName'] = [regexp_replace(cleanDocName, k, v)]
+#             output_dq_new = output_dq.withColumn('cleanDocName_new', regexp_replace(col('cleanDocName'), k, v))
+#
+#         output_dq_new.show(100)
+
+
+
+*************  Creating a Dictionary from a Dataframe *******************
+
+ final_available_columns_dict = dict(final_available_columns_d.rdd.map(lambda x: (x['Possible_Combinations'], x['Column_Name'])).collect())
+
+
+
+************************* Using “case when” on Spark DataFrame **************************
+--https://sparkbyexamples.com/spark/spark-case-when-otherwise-example/
+
+Similar to SQL syntax, we could use “case when” with expression expr() .
+
+val df3 = df.withColumn("new_gender",
+      expr("case when gender = 'M' then 'Male' " +
+                       "when gender = 'F' then 'Female' " +
+                       "else 'Unknown' end"))
+
+
+
+************* Write file in text format *****************
+
+jsn_raw_data.coalesce(1).write.format("text").option("header", "false").mode("append").save("D:\Spark_Data\VDM_FILE\output.txt")
+
+
+
+
+
+**************Date Functions********************
+
+from pyspark.sql.functions import concat, lit, year,col,to_date, to_timestamp, date_format, unix_timestamp, from_unixtime
+
+# Convert date string to proper date format
+        vDfm_Date = vDfm.withColumn("POIssueDate_F", from_unixtime(unix_timestamp('POIssueDate', 'MM/dd/yyy')).alias('date'))
+
+        #Removed trailing 0's from the date
+        vDfm_Date = vDfm_Date.withColumn("POIssueDate_Formated", func.to_date(func.col("POIssueDate_F")))\
+                             .withColumn("Year", year(col("POIssueDate_F")))
+

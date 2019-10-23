@@ -1,0 +1,176 @@
+
+-- VDM CODE
+
+
+from pyspark.sql import SparkSession
+from pyspark.sql.window import Window as W
+from pyspark.sql.functions import col, size, split, concat, row_number
+from pyspark.sql import functions as F
+import pandas as pd
+
+spark = SparkSession.builder.appName("Analysing Product data").getOrCreate()
+
+df  = spark.read.format("csv")\
+             .option("header", "true") \
+             .option("charset", "iso-8859-1")\
+             .option("escape", "\"")\
+             .option("multiLine", "true")\
+             .option("charToEscapeQuoteEscaping", "\n")\
+             .load("D:\Spark_Data\Test\Final_Columns.csv")
+
+
+df1  = spark.read.format("csv")\
+             .option("header", "true")\
+             .option("escape", "\"")\
+             .option("multiLine", "true")\
+             .option("charToEscapeQuoteEscaping", "\n")\
+             .load("D:\Spark_Data\Test\Mapping_File.csv")
+
+
+df2  = spark.read.format("csv")\
+             .option("header", "true")\
+             .option("escape", "\"")\
+             .option("multiLine", "true")\
+             .option("charToEscapeQuoteEscaping", "\n")\
+             .load("D:\Spark_Data\Test\Output_File.csv")
+
+
+df3  = spark.read.format("csv")\
+             .option("header", "true")\
+             .option("escape", "\"")\
+             .option("multiLine", "true")\
+             .option("charToEscapeQuoteEscaping", "\n")\
+             .load("D:\Spark_Data\Test\Raw_Data.csv")
+
+df1 =    df.withColumn("idx", F.monotonically_increasing_id())
+windowSpec = W.orderBy("idx")
+df1.withColumn("idx", F.row_number().over(windowSpec)).show()
+
+df.show()
+df1.select("Column_Name", "Possible_Combinations").show()
+df2.show()
+df.dtypes
+
+#df.select("col").show()
+
+
+--- Different Code
+
+def rreplace(s, old, new, occurrence):
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
+
+if __name__ == '__main__':
+    from pyspark.sql import SparkSession
+    from pyspark.sql.window import Window as W
+    from pyspark.sql import functions as F
+
+    spark = SparkSession.builder.appName("Analysing Product data").getOrCreate()
+
+    final_columns = spark.read.format("csv") \
+        .option("header", "true") \
+        .load("/Users/liju/PycharmProjects/PythonPractice/files/Final_Columns.csv")
+
+    mapping = spark.read.format("csv") \
+        .option("header", "true") \
+        .option("escape", "\"") \
+        .option("multiLine", "true") \
+        .option("charToEscapeQuoteEscaping", "\n") \
+        .load("/Users/liju/PycharmProjects/PythonPractice/files/Mapping_File.csv")
+
+    output_file = spark.read.format("csv") \
+        .option("header", "true") \
+        .option("escape", "\"") \
+        .option("multiLine", "true") \
+        .option("charToEscapeQuoteEscaping", "\n") \
+        .load("/Users/liju/PycharmProjects/PythonPractice/files/Output_File.csv")
+
+    raw_data = spark.read.format("csv") \
+        .option("header", "true") \
+        .option("escape", "\"") \
+        .option("multiLine", "true") \
+        .option("charToEscapeQuoteEscaping", "\n") \
+        .load("/Users/liju/PycharmProjects/PythonPractice/files/Raw_Data.csv")
+
+
+
+
+    #df1.registerTempTable("mapping");
+
+    #mapping = spark.sql("select Column_Name,Possible_Combinations from mapping")
+
+    #mapping.show()
+
+    raw_data_colmn_set = set(raw_data.columns)
+    print(raw_data_colmn_set)
+
+
+    mapping_dict = {}
+    for row in mapping.rdd.collect():
+        mapping_dict[row[0]]=row[1]
+
+    print(mapping_dict)
+
+    mapping_columns = set(mapping_dict.keys())
+
+    print("mapping_columns = ")
+    print mapping_columns
+
+    final_columns_set = set(final_columns.select('File_Columns').rdd.flatMap(lambda x: x).collect())
+    print("final_columns = ")
+    print final_columns_set
+
+    final_available_columns_set = raw_data_colmn_set.intersection(mapping_columns)
+
+    for i in range(len(final_columns_set)):
+        final_columns_list = list(final_columns_set)
+        if(final_columns_list[i] not in mapping_dict.values()):
+            final_available_columns_set.remove(final_columns_list[i])
+
+    print("final_available_columns = ")
+    print final_available_columns_set
+
+    final_available_columns_list = list(final_available_columns_set)
+
+    query = ""
+
+    for i in range(len(final_available_columns_list)):
+        query = query +  final_available_columns_list[i]+ " as " + mapping_dict[final_available_columns_list[i]] +","
+
+    query = rreplace(query,",","",1)
+
+    print(query)
+
+    raw_data.registerTempTable("raw_data_table")
+
+    spark.sql("select "+query+" from raw_data_table").show()
+
+
+    #df3.registerTempTable("rawdata")
+
+    #spark.sql("select ")
+
+
+
+    #mapdict = dict(df1.groupBy(lambda  x : x[0]).map(lambda x:(x[0],{y[1] for y in x[1]})))
+    #print(mapdict)
+
+    #mappingrdd = mapping.rdd.groupBy(lambda x : x[0]).map(lambda x:(x[0],{y[1] for y in x[1]}))
+    #mapdict  = dict(mappingrdd)
+
+    #print(mappingrdd)
+
+    # df.select("col").show()
+
+
+
+
+
+
+
+
+
+
+
+
+

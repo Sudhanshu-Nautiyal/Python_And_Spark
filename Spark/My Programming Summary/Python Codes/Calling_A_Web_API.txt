@@ -1,0 +1,24 @@
+
+import urllib3
+import json
+
+http = urllib3.PoolManager()
+
+url = 'http://52.202.128.248:8080/supplier-family/family/find'
+encoded_body = json.dumps({
+ "data": [
+     {
+     "name" : "Dell India",
+     "id" : "1"
+     },
+     {
+     "name" : "Netlink pvt ltd",
+     "id" : "2"
+     }
+ ]
+})
+
+r = http.request('POST', url,
+                headers={'Content-Type': 'application/json'},
+                body=encoded_body)
+print(r.data)

@@ -1,0 +1,229 @@
+
+###################### 1. Way ############################
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, coalesce, to_json, struct, when, lit,  monotonically_increasing_id, row_number,rank
+from pyspark.sql import functions as F
+import pandas as pd
+import urllib3, re
+import json
+from pyspark.sql.window import Window
+
+spark = SparkSession.builder.appName("Analysing Customer Data").getOrCreate()
+
+http = urllib3.PoolManager()
+
+raw_data = spark.read.format("csv") \
+    .option("header", "true") \
+    .option("escape", "\"") \
+    .option("multiLine", "true") \
+    .option("charToEscapeQuoteEscaping", "\n") \
+    .option("encoding", "UTF-16")\
+    .load("D:\Spark_Data\VDM_FILE\Raw_Data1.csv")
+
+class read_Json_API:
+     def get_Json_API_Data(self):
+        http = urllib3.PoolManager()
+
+        raw_data = spark.read.format("csv") \
+            .option("header", "true") \
+            .option("escape", "\"") \
+            .option("multiLine", "true") \
+            .option("charToEscapeQuoteEscaping", "\n") \
+            .option("encoding", "UTF-16") \
+            .load("D:\Spark_Data\VDM_FILE\Raw_Data1.csv")
+
+
+w = Window().orderBy(lit('A'))
+
+jsn_raw_data = raw_data.select("SupplierName").distinct().withColumnRenamed("SupplierName", "name")
+jsn_raw_data = jsn_raw_data.withColumn("id", row_number().over(w))
+
+jsn_raw_data = jsn_raw_data.filter(jsn_raw_data['id'] < 2)\
+    .withColumn(
+    "JSON",
+    to_json(
+        struct(
+           [coalesce(col(x), lit("")).alias(x) for x in jsn_raw_data.columns]
+        )
+    )
+)
+
+jsn_raw_data = jsn_raw_data.select(F.concat_ws(',',F.collect_list(jsn_raw_data.JSON)).alias('JSON_VALUE')).select("JSON_VALUE")
+
+jsn_raw_str = jsn_raw_data.select('JSON_VALUE').rdd.flatMap(lambda x: x).collect()
+
+jsn_raw_str = str(jsn_raw_str)
+
+jsn_raw_str = jsn_raw_str[1:-1]
+
+str1 = '{"data": ['
+str2 = ']}'
+
+jsn_raw_data1 = str1 + jsn_raw_str.replace("'", "") + str2
+
+print(jsn_raw_data1)
+
+
+#encoded_body=jsn_raw_data1
+#print (encoded_body)
+encoded_body = json.dumps(jsn_raw_data1)
+#print(encoded_body)
+
+# #jsn_raw_data.coalesce(1).write.format("text").option("header", "false").mode("append").save("D:\Spark_Data\VDM_FILE\output.txt")
+
+url = 'http://52.202.128.248:8080/supplier-family/family/find'
+response = http.request('POST', url,
+                headers={'Content-Type': 'application/json'},
+                body=encoded_body)
+
+print(response.data)
+
+
+## 2. Way
+
+
+import urllib3
+import json
+
+http = urllib3.PoolManager()
+
+url = 'http://52.202.128.248:8080/supplier-family/family/find'
+encoded_body = json.dumps({
+ "data": [
+     {
+     "name" : "Dell India",
+     "id" : "1"
+     },
+     {
+     "name" : "Netlink pvt ltd",
+     "id" : "2"
+     }
+ ]
+})
+
+r = http.request('POST', url,
+                headers={'Content-Type': 'application/json'},
+                body=encoded_body)
+print(r.data)
+
+
+## 3. Object Oriented Approach 
+
+class read_Json_API:
+
+    def create_json_objects(self):
+        raw_data = spark.read.format("csv") \
+            .option("header", "true") \
+            .option("escape", "\"") \
+            .option("multiLine", "true") \
+            .option("charToEscapeQuoteEscaping", "\n") \
+            .option("encoding", "UTF-16") \
+            .load("D:\Spark_Data\VDM_FILE\Raw_Data1.csv")
+
+        w = Window().orderBy(lit('A'))
+
+        jsn_raw_data = raw_data.select("SupplierName").distinct().withColumnRenamed("SupplierName", "name")
+
+        jsn_raw_data = jsn_raw_data.withColumn("id", row_number().over(w))
+
+        #jsn_raw_data.show()
+
+        jsn_raw_dict = dict(
+            jsn_raw_data.rdd.map(lambda x: (x['id'], x['name'])).collect())
+
+#        me = read_Json_API()
+        json_list = []
+
+        for k, v in jsn_raw_dict.items():
+            me = read_Json_API()
+            me.id = k
+            me.name = str(v)
+            #print(me.id)
+            json_list.append(me)
+
+        # json_array = np.asarray(json_list)
+        # print(json_array.tolist())
+
+        results = [obj.to_dict() for obj in json_list]
+        jsdata = json.dumps({"data": results})
+
+        return jsdata
+
+    def call_Json_API(self):
+        try:
+            call_jsob_object = read_Json_API()
+            encoded_body = call_jsob_object.create_json_objects()
+            url = 'http://52.202.128.248:8080/supplier-family/family/find'
+            response = http.request('POST', url, headers={'Content-Type': 'application/json'}, body=encoded_body)
+            print(encoded_body)
+            print(response.data)
+
+            return 1
+        except:
+            return 0
+
+    # def toJSON(self):
+    #     return json.dumps(self, default=lambda o: o.__dict__,
+    #                       sort_keys=True, indent=4)
+
+    def to_dict(self):
+        #print(str(self.id))
+        return {"id": self.id, "name": self.name}
+
+
+#
+# me = read_Json_API()
+#
+# me.id = 1
+# me.name = 'Dell India'
+#
+# me1 = read_Json_API()
+#
+# me1.id = 2
+# me1.name = 'Dell India'
+#
+# new_key = read_Json_API()
+#
+# new_key.data = [me,me1]
+#
+# print(new_key.toJSON())
+
+me = read_Json_API()
+me.call_Json_API()
+
+***************** Read API Data *******************
+
+from pyspark.sql import SparkSession
+import pandas as pd
+import requests
+import request
+from pandas.io.json import json_normalize
+
+spark = SparkSession.builder.appName("Analysing Customer Data").getOrCreate()
+
+def call_Json_API(self):
+
+            call_jsob_object = read_Json_API()
+            encoded_body = call_jsob_object.create_json_objects()
+            url = 'http://52.202.128.248:8080/supplier-family/family/find'
+            response = requests.post(url, data=encoded_body,headers={'Content-Type': 'application/json'})
+            print(response.content)
+            # print(encoded_body)
+            #json_data = response.text
+            parsed_json_data = json.loads(response.content)
+            normalized = json_normalize(parsed_json_data['data'])
+            #print(final_data)
+            df = pd.DataFrame.from_dict(normalized, orient='columns')
+            print(df)
+            #with open('/Users/liju/PycharmProjects/PythonPractice/files/json_data.txt') as json_file:
+            #data = json.loads(response.text)
+            # normalized = json_normalize(data['data'])
+            # df = pd.DataFrame.from_dict(normalized, orient='columns')
+            # print(df)
+            print('call_Json_API_Executed')
+
+
+me = read_Json_API()
+me.call_Json_API()
+
